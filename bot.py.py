@@ -6,7 +6,7 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 import threading
 
 # ==========================================
-# 1. إعدادات السيرفر (يدعم GET و HEAD لإرضاء Render)
+# 1. إعدادات السيرفر (Health Check)
 # ==========================================
 class HealthCheckHandler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -20,14 +20,15 @@ class HealthCheckHandler(BaseHTTPRequestHandler):
 
 def run_health_check():
     port = int(os.environ.get("PORT", 10000))
+    print(f"--- بدء تشغيل سيرفر الـ Health Check على المنفذ {port} ---")
     server = HTTPServer(('0.0.0.0', port), HealthCheckHandler)
     server.serve_forever()
 
-# تشغيل السيرفر في الخلفية
+# تشغيل السيرفر في خلفية النظام
 threading.Thread(target=run_health_check, daemon=True).start()
 
 # ==========================================
-# 2. إعدادات التليجرام والعملات
+# 2. إعدادات التليجرام والعملات (بوت السيجنال المخصص)
 # ==========================================
 TELEGRAM_BOT_TOKEN = "8788563632:AAHLUL6Po-E5jLXF3Q_kdrDIFHz_3fJ2dVY"
 TELEGRAM_CHAT_ID = "884123553"
@@ -44,9 +45,10 @@ def send_telegram_msg(message):
     try:
         url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
         payload = {"chat_id": TELEGRAM_CHAT_ID, "text": message}
-        requests.post(url, json=payload, timeout=10)
+        res = requests.post(url, json=payload, timeout=10)
+        print(f"نتيجة إرسال تليجرام: {res.status_code} - {res.text}")
     except Exception as e:
-        print(f"خطأ في إرسال تليجرام: {e}")
+        print(f"خطأ استثناء في إرسال تليجرام: {e}")
 
 def get_klines(symbol, interval="30", limit=100):
     try:
@@ -57,6 +59,7 @@ def get_klines(symbol, interval="30", limit=100):
         df['close'] = df['close'].astype(float)
         return df
     except Exception as e:
+        print(f"خطأ في جلب بيانات {symbol}: {e}")
         return None
 
 def calculate_indicators(df):
@@ -75,10 +78,12 @@ def check_golden_setup(df):
     return False, {}
 
 def run_trading_bot():
-    send_telegram_msg("🚀 تم إقلاع بوت نايف للتداول الآلي بنجاح على Render!")
+    print("--- تم استدعاء دالة run_trading_bot وجاري إرسال التنبيه الأول ---")
+    send_telegram_msg("🚀 تم إقلاع بوت نايف للسيجنال والتداول الآلي بنجاح!")
     
     while True:
         try:
+            print("--- بدء دورة فحص العملات ---")
             for symbol in HALAL_SYMBOLS:
                 df = get_klines(symbol, interval=TIMEFRAME)
                 if df is not None:
@@ -87,9 +92,10 @@ def run_trading_bot():
                     if is_setup:
                         send_telegram_msg(f"🎯 فرصة قوية مطابقة للشروط!\n- العملة: {symbol}\n- السعر: {details['entry_price']}")
                 time.sleep(1)
+            print("--- انتهى فحص جميع العملات، الانتظار 5 دقائق ---")
             time.sleep(300)
         except Exception as e:
-            print(f"خطأ عام: {e}")
+            print(f"خطأ عام في الحلقة الرئيسية: {e}")
             time.sleep(30)
 
 if __name__ == "__main__":
