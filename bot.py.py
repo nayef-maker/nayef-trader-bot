@@ -124,7 +124,7 @@ def run_trading_bot():
 
 if __name__ == "__main__":
     run_trading_bot()
-    import os
+import os
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import threading
 
@@ -139,4 +139,5 @@ def run_health_check():
     server = HTTPServer(('0.0.0.0', port), HealthCheckHandler)
     server.serve_forever()
 
+threading.Thread(target=run_health_check, daemon=True).start()
 threading.Thread(target=run_health_check, daemon=True).start()
