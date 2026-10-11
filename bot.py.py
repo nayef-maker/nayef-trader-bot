@@ -5,7 +5,7 @@ import os
 from pybit.unified_trading import HTTP
 import requests
 
-# --- سيرفر الويب الوهمي لترضية منصة Render فقط ---
+# --- سيرفر الويب الوهمي لترضية Render (يعمل في الخلفية بدون ما يعطل البوت) ---
 class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
@@ -16,9 +16,10 @@ def run_dummy_server():
     server = HTTPServer(('0.0.0.0', 10000), SimpleHTTPRequestHandler)
     server.serve_forever()
 
-# تشغيل السيرفر في الخلفية
-threading.Thread(target=run_dummy_server, daemon=True).start()
-# -----------------------------------------------
+# تشغيل السيرفر في خلفية النظام فوراً
+server_thread = threading.Thread(target=run_dummy_server, daemon=True)
+server_thread.start()
+# -------------------------------------------------------------------------
 
 def send_telegram_message(message):
     try:
@@ -45,21 +46,17 @@ def check_account_balance():
     return 0.0
 
 def main():
-    print("🤖 بدأ تشغيل بوت بايبت ومسح السوق...")
+    print("🤖 بدأ تشغيل بوت بايبت ومسح السوق بنجاح...")
     send_telegram_message("🤖 مرحباً أبو كياد! تم ربط البوت بنجاح وبدء مراقبة السوق.")
     
     while True:
         try:
             balance = check_account_balance()
             print(f"💰 الرصيد الحالي في المحفظة: {balance} USDT")
-            
-            # هنا يتم فحص السوق وتطبيق استراتيجية التبريد وبدون ستوب لوز
             print("⏳ جارٍ فحص السوق وانتظار الفرصة القادمة...")
-            
         except Exception as e:
             print(f"❌ حدث خطأ أثناء دورة الفحص: {e}")
             
-        # الانتظار لمدة 5 دقائق قبل الدورة التالية
         time.sleep(300)
 
 if __name__ == "__main__":
