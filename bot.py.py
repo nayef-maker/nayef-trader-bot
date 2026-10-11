@@ -1,11 +1,10 @@
 import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import time
-import os
 from pybit.unified_trading import HTTP
 import requests
 
-# --- سيرفر الويب الوهمي لترضية Render (يعمل في الخلفية بدون ما يعطل البوت) ---
+# --- سيرفر الويب الوهمي لترضية Render ---
 class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
@@ -16,38 +15,26 @@ def run_dummy_server():
     server = HTTPServer(('0.0.0.0', 10000), SimpleHTTPRequestHandler)
     server.serve_forever()
 
-# تشغيل السيرفر في خلفية النظام فوراً
-server_thread = threading.Thread(target=run_dummy_server, daemon=True)
-server_thread.start()
-# -------------------------------------------------------------------------
+threading.Thread(target=run_dummy_server, daemon=True).start()
+# ----------------------------------------
 
-def send_telegram_message(message):
-    try:
-        token = os.getenv("TELEGRAM_BOT_TOKEN")
-        chat_id = os.getenv("TELEGRAM_CHAT_ID")
-        if token and chat_id:
-            url = f"https://api.telegram.org/bot{token}/sendMessage"
-            payload = {"chat_id": chat_id, "text": message}
-            requests.post(url, json=payload, timeout=5)
-    except Exception:
-        pass
+# --- مفاتيح بايبت الخاصة بك ---
+BYBIT_API_KEY = "KH5jxrrRRAcbMV1os5"
+BYBIT_API_SECRET = "h5HV5gibMoXkmZaSBcW8AZHgCkznGF2pFpiE"
+# -------------------------------
 
 def check_account_balance():
     try:
-        api_key = os.getenv("BYBIT_API_KEY")
-        api_secret = os.getenv("BYBIT_API_SECRET")
-        if api_key and api_secret:
-            session = HTTP(testnet=False, api_key=api_key, api_secret=api_secret)
-            response = session.get_wallet_balance(accountType="UNIFIED")
-            balance = response['result']['list'][0]['totalEquity']
-            return float(balance)
+        session = HTTP(testnet=False, api_key=BYBIT_API_KEY, api_secret=BYBIT_API_SECRET)
+        response = session.get_wallet_balance(accountType="UNIFIED")
+        balance = response['result']['list'][0]['totalEquity']
+        return float(balance)
     except Exception as e:
         print(f"⚠️ خطأ في قراءة رصيد بايبت: {e}")
     return 0.0
 
 def main():
     print("🤖 بدأ تشغيل بوت بايبت ومسح السوق بنجاح...")
-    send_telegram_message("🤖 مرحباً أبو كياد! تم ربط البوت بنجاح وبدء مراقبة السوق.")
     
     while True:
         try:
