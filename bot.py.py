@@ -1,8 +1,11 @@
 import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import time
+import os
+from pybit.unified_trading import HTTP
+import requests
 
-# --- سطر السيرفر الوهمي لترضية منصة Render فقط ---
+# --- سيرفر الويب الوهمي لترضية منصة Render فقط ---
 class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
@@ -13,15 +16,9 @@ def run_dummy_server():
     server = HTTPServer(('0.0.0.0', 10000), SimpleHTTPRequestHandler)
     server.serve_forever()
 
+# تشغيل السيرفر في الخلفية
 threading.Thread(target=run_dummy_server, daemon=True).start()
 # -----------------------------------------------
-
-import os
-from pybit.unified_trading import HTTP
-import requests
-
-# --- هنا ضع كودك الأصلي كاملاً بجميع دوالك وإعداداتك السابقة ---
-# (كل ما عليك فعله هو لصق الكود الأصلي هنا مباشرة تحت هذا السطر)
 
 def send_telegram_message(message):
     try:
@@ -43,21 +40,26 @@ def check_account_balance():
             response = session.get_wallet_balance(accountType="UNIFIED")
             balance = response['result']['list'][0]['totalEquity']
             return float(balance)
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"⚠️ خطأ في قراءة رصيد بايبت: {e}")
     return 0.0
 
 def main():
+    print("🤖 بدأ تشغيل بوت بايبت ومسح السوق...")
     send_telegram_message("🤖 مرحباً أبو كياد! تم ربط البوت بنجاح وبدء مراقبة السوق.")
     
     while True:
         try:
             balance = check_account_balance()
             print(f"💰 الرصيد الحالي في المحفظة: {balance} USDT")
+            
+            # هنا يتم فحص السوق وتطبيق استراتيجية التبريد وبدون ستوب لوز
             print("⏳ جارٍ فحص السوق وانتظار الفرصة القادمة...")
+            
         except Exception as e:
             print(f"❌ حدث خطأ أثناء دورة الفحص: {e}")
             
+        # الانتظار لمدة 5 دقائق قبل الدورة التالية
         time.sleep(300)
 
 if __name__ == "__main__":
